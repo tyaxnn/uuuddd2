@@ -1,2 +1,5 @@
 /target
-/output
+/output/bands
+/output/berry
+/output/band_infos/dats
+/output/band_infos/output
