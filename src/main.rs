@@ -6,5 +6,5 @@ use uuuddd2::{
 fn main() {
     let comment = "a1";
 
-    calculate_band_info_all_band(true, 500, &System::UuudddTmdUM(Param::test()), comment);
+    calculate_band_info_all_band(true, 500, &System::Tmd(Param::test()), comment);
 }
