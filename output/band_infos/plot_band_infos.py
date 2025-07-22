@@ -144,7 +144,7 @@ def plot_berry_contour(file_path,size):
         height_map_plot(kx,ky,bcdx,discription,plot_title,output_dir)
 
     #------------------------------------------------------------
-    #                       BCD xのplot
+    #                       BCD yのplot
     #------------------------------------------------------------
 
     for i in range(2 + size * 3,2 + size * 5,2):
@@ -158,4 +158,4 @@ def plot_berry_contour(file_path,size):
 
 if __name__ == '__main__':
     # 'berry.dat'を読み込んでプロットを作成
-    plot_berry_contour('dats/a1_500_tmd_lambda0p1_j0p25_mu-0p1.csv',2)
+    plot_berry_contour('dats/a2_500_tmduuuddd_lambda0p1_j0p25_mu-0p1.csv',6)

@@ -4,7 +4,7 @@ use uuuddd2::{
 };
 
 fn main() {
-    let comment = "a1";
+    let comment = "a2";
 
-    calculate_band_info_all_band(true, 500, &System::Tmd(Param::test()), comment);
+    calculate_band_info_all_band(500, &System::UuudddTmd(Param::test()), comment);
 }
