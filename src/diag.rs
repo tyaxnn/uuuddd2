@@ -2,7 +2,7 @@ use crate::consts::*;
 use crate::model::System;
 use nalgebra::{Complex, Const, Matrix2, Matrix6, SymmetricEigen, Vector2, DimMin, Dim, OMatrix, OVector};
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct SEud<const N: usize> {
     pub u: SymmetricEigen<Complex<f64>, Const<N>>,
     pub d: SymmetricEigen<Complex<f64>, Const<N>>,
@@ -28,7 +28,7 @@ where
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub enum SEudEnum{
     SEud2(SEud<2>),
     SEud6(SEud<6>),
