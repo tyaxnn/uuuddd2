@@ -5,3 +5,10 @@ edition = "2024"
 
 [dependencies]
 nalgebra = "0.33"
+rayon = "1.10.0"
+
+[profile.release]
+opt-level = 3         # 最高レベルの速度最適化
+lto = "fat"           # 最大限のリンク時最適化を有効化
+codegen-units = 1     # コード生成ユニットを減らし、最適化を強化
+panic = "abort"       # panic 時に 'unwind' ではなく 'abort' を使用

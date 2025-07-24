@@ -4,74 +4,10 @@ use crate::util::{i_j_to_kk,cal_cell_area,cal_cell_area_grid,i_j_to_kk_grid,Grid
 use crate::model::System;
 use crate::binfo::BinfosMergedOnkk;
 
-use crate::cal_bc_bcd::{bc_sum_up,bcd_sum_up};
+use crate::cal_bc_bcd::{bcd_sum_up};
 
 use nalgebra::{Vector2,};
 use std::fs;
-
-pub fn cal_bc_grid_test(fermi_energy : f64, system : &System) -> f64{
-
-    let mut bc = 0.;
-
-    let n = 100;
-
-    for grid_x in 0..n{
-        for grid_y in 0..n{
-            let grid_info = GridInfo::new_ijn(grid_x,grid_y,n,n);
-
-            let (binfos_merged_onkks, max_bc ) = calculate_band_info_grid(3, system, grid_info);
-
-            if max_bc.abs() > 100.0{
-                let (binfos_merged_onkks_new, _ ) = calculate_band_info_grid(1000, system, grid_info);
-
-                bc += bc_sum_up(fermi_energy, &binfos_merged_onkks_new);
-            }
-            else if max_bc.abs() > 10.0{
-                let (binfos_merged_onkks_new, _ ) = calculate_band_info_grid(100, system, grid_info);
-
-                bc += bc_sum_up(fermi_energy, &binfos_merged_onkks_new);
-            }
-            else if max_bc.abs() > 1.0{
-                let (binfos_merged_onkks_new, _ ) = calculate_band_info_grid(10, system, grid_info);
-
-                bc += bc_sum_up(fermi_energy, &binfos_merged_onkks_new);
-            }
-            else{
-                bc += bc_sum_up(fermi_energy, &binfos_merged_onkks);
-            }
-        }
-    }
-
-    bc
-}
-
-pub fn cal_bcd_grid_test(fermi_energy : f64, system : &System) -> Vector2<f64>{
-
-    let mut bcd = Vector2::zeros();
-
-    let n = 500;
-
-    for grid_x in 0..n{
-        for grid_y in 0..n{
-            let grid_info = GridInfo::new_ijn(grid_x,grid_y,n,n);
-
-            let (binfos_merged_onkks, max_bcd ) = calculate_band_info_grid(1, system, grid_info);
-
-            if max_bcd.abs() > 10.{
-
-                let graph_mesh = std::cmp::min((max_bcd.abs()/10.) as usize,1000);
-                let (binfos_merged_onkks_new, _ ) = calculate_band_info_grid(graph_mesh, system, grid_info);
-
-                bcd += bcd_sum_up(fermi_energy, &binfos_merged_onkks_new);
-            }
-            else{
-                bcd += bcd_sum_up(fermi_energy, &binfos_merged_onkks);
-            }
-        }
-    }
-
-    bcd
-}
 
 pub fn cal_bcd_grid(fermi_energy : f64, system : &System,grid_mesh : usize, max_sub_mesh : usize, mesh_scale : f64) -> Vector2<f64>{
 

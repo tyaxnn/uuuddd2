@@ -1,11 +1,9 @@
 use uuuddd2::{
-    calbinfo::{calculate_band_info_all_band,cal_bc_grid_test,cal_bcd_grid_test},
-    cal_bc_bcd::{bc_sum_up,bcd_sum_up,Tanzakus,get_tanzakus},
-    model::{System,Param},
+    cal_bc_bcd::{get_tanzakus_rayon,}, calbinfo::cal_bcd_grid, model::{Param, System}
 };
 
 fn main() {
-    let comment = "a2";
+    let _comment = "a2";
 
     let system = System::UuudddTmd(Param::test());
 
@@ -18,7 +16,9 @@ fn main() {
     //     cal_bcd_grid_test(fermi_energy, &system)
     // );
 
-    let tanzaku = get_tanzakus(&system, 10, 100, 0.1);
+    let tanzaku = get_tanzakus_rayon(&system, 200, 2000, 0.3);
 
     tanzaku.export_integrated_bc_bcd("test.dat").expect("wow");
+
+    println!("{}",cal_bcd_grid(0.0, &system, 10, 100, 0.1))
 }
