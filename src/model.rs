@@ -81,7 +81,7 @@ impl Param{
     pub fn test() -> Self{
         let lambda = 0.1 * T;
         let jj = 0.25;
-        let mu = -0.1;
+        let mu = 0.0;
 
         Param { lambda, jj, mu }
     }

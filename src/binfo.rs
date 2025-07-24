@@ -4,12 +4,31 @@ use crate::diag::{SEudEnum,};
 use nalgebra::{Complex, Vector2, Vector6,};
 use std::fmt::Write;
 
+//波数点とその上の全てのバンドにおけるBinfoを格納する構造体
 pub struct BinfosMergedOnkk{
     kk : Vector2<f64>,
-    infos : Vec<Binfo>
+    pub infos : Vec<Binfo>
 }
 
 impl BinfosMergedOnkk{
+    pub fn cal_cd(
+        i : usize, 
+        j : usize, 
+        seud_mat : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_px : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_py : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_mx : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_my : &Vec<Vec<Option<SEudEnum>>>,
+        size : usize,
+        kk : Vector2<f64>
+    ) -> Self{
+        let binfos_sepud = BinfosSEPud::cal_cd(i, j, seud_mat, seud_mat_px, seud_mat_py,seud_mat_mx, seud_mat_my, size);
+
+        let binfos_merged_onkk = binfos_sepud.mergedsorted(kk);
+
+        binfos_merged_onkk        
+    }
+    //構造体を計算して作る関数
     pub fn cal(
         i : usize, 
         j : usize, 
@@ -17,16 +36,16 @@ impl BinfosMergedOnkk{
         seud_mat_px : &Vec<Vec<Option<SEudEnum>>>,
         seud_mat_py : &Vec<Vec<Option<SEudEnum>>>,
         size : usize,
-        cell_area : f64,
         kk : Vector2<f64>
     ) -> Self{
-        let binfos_sepud = BinfosSEPud::cal(i, j, seud_mat, seud_mat_px, seud_mat_py, size, cell_area);
+        let binfos_sepud = BinfosSEPud::cal(i, j, seud_mat, seud_mat_px, seud_mat_py, size);
 
         let binfos_merged_onkk = binfos_sepud.mergedsorted(kk);
 
         binfos_merged_onkk        
     }
-    pub fn write(&self, file_str : &mut String, size : usize){
+    //構造体の情報を入力のStringの最後の行にS加える関数
+    pub fn write(&self, file_str : &mut String, size : usize, cell_area : f64){
 
         let kk = self.kk;
         let berrys : Vec<f64> = self.infos.iter().map(|b| b.berry).collect();
@@ -38,7 +57,7 @@ impl BinfosMergedOnkk{
 
         for k in 0..size{
             write!(file_str,",{}",
-                berrys[k],
+                berrys[k] / cell_area,
             ).unwrap();
         }
         for k in 0..size{
@@ -59,6 +78,34 @@ impl BinfosMergedOnkk{
 
         write!(file_str,"\n").unwrap();
     }
+    pub fn max_bc(&self, cell_area : f64) -> f64 {
+        
+        let berrys : Vec<f64> = self.infos.iter().map(|b| b.berry).collect();
+
+        let max_berry = berrys
+            .iter()
+            .copied()        // Option<&f64> → Option<f64>
+            .max_by(
+                |a, b| 
+                a.abs().partial_cmp(&b.abs()).unwrap()
+            );
+
+        max_berry.unwrap() / cell_area
+    }
+    pub fn max_bcd(&self, cell_area : f64) -> f64 {
+        
+        let bcds : Vec<f64> = self.infos.iter().map(|b| b.bcd.unwrap().norm()).collect();
+
+        let max_bcd = bcds
+            .iter()
+            .copied()        // Option<&f64> → Option<f64>
+            .max_by(
+                |a, b| 
+                a.abs().partial_cmp(&b.abs()).unwrap()
+            );
+
+        max_bcd.unwrap() / cell_area
+    }
 }
 
 struct BinfosSEPud{
@@ -73,6 +120,52 @@ impl BinfosSEPud {
 
         BinfosMergedOnkk { kk, infos }
     }
+    fn cal_cd(
+        i : usize, 
+        j : usize, 
+        seud_mat : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_px : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_py : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_mx : &Vec<Vec<Option<SEudEnum>>>,
+        seud_mat_my : &Vec<Vec<Option<SEudEnum>>>,
+        size : usize,
+    ) -> Self{
+        let mut binfos_sepud = BinfosSEPud::cal_without_bcd(i, j, seud_mat,size);
+
+        let binfos_sepud_px = BinfosSEPud::cal_without_bcd(i, j, seud_mat_px,size);
+        let binfos_sepud_py = BinfosSEPud::cal_without_bcd(i, j, seud_mat_py,size);
+        let binfos_sepud_mx = BinfosSEPud::cal_without_bcd(i, j, seud_mat_mx,size);
+        let binfos_sepud_my = BinfosSEPud::cal_without_bcd(i, j, seud_mat_my,size);
+
+        for ei in 0..size{
+            let berry_px = binfos_sepud_px.u[ei].berry;
+            let berry_py = binfos_sepud_px.u[ei].berry;
+            let berry_mx = binfos_sepud_mx.u[ei].berry;
+            let berry_my = binfos_sepud_my.u[ei].berry;
+
+            binfos_sepud.u[ei].bcd = Some({
+                let changex = (berry_px - berry_mx) / DELTA / 2.;
+                let changey = (berry_py - berry_my) / DELTA / 2.;
+
+                Vector2::new(changex,changey)
+            });
+        }
+        for ei in 0..size{
+            let berry_px = binfos_sepud_px.d[ei].berry;
+            let berry_py = binfos_sepud_py.d[ei].berry;
+            let berry_mx = binfos_sepud_mx.d[ei].berry;
+            let berry_my = binfos_sepud_my.d[ei].berry;
+
+            binfos_sepud.d[ei].bcd = Some({
+                let changex = (berry_px - berry_mx) / DELTA / 2.;
+                let changey = (berry_py - berry_my) / DELTA / 2.;
+
+                Vector2::new(changex,changey)
+            });
+        }   
+
+        binfos_sepud
+    }
     fn cal(
         i : usize, 
         j : usize, 
@@ -80,17 +173,16 @@ impl BinfosSEPud {
         seud_mat_px : &Vec<Vec<Option<SEudEnum>>>,
         seud_mat_py : &Vec<Vec<Option<SEudEnum>>>,
         size : usize,
-        cell_area : f64,  
     ) -> Self{
-        let mut binfos_sepud = BinfosSEPud::cal_without_bcd(i, j, seud_mat,size,cell_area);
+        let mut binfos_sepud = BinfosSEPud::cal_without_bcd(i, j, seud_mat,size);
 
-        let binfos_sepud_px = BinfosSEPud::cal_without_bcd(i, j, seud_mat_px,size,cell_area);
-        let binfos_sepud_py = BinfosSEPud::cal_without_bcd(i, j, seud_mat_py,size,cell_area);
+        let binfos_sepud_px = BinfosSEPud::cal_without_bcd(i, j, seud_mat_px,size);
+        let binfos_sepud_py = BinfosSEPud::cal_without_bcd(i, j, seud_mat_py,size);
 
         for ei in 0..size{
             let berry = binfos_sepud.u[ei].berry;
-            let berry_px = binfos_sepud.u[ei].berry;
-            let berry_py = binfos_sepud.u[ei].berry;
+            let berry_px = binfos_sepud_px.u[ei].berry;
+            let berry_py = binfos_sepud_px.u[ei].berry;
 
             binfos_sepud.u[ei].bcd = Some({
                 let changex = (berry_px - berry) / DELTA;
@@ -118,8 +210,7 @@ impl BinfosSEPud {
         i : usize, 
         j : usize, 
         seud_mat : &Vec<Vec<Option<SEudEnum>>>,
-        size : usize,
-        cell_area : f64,        
+        size : usize,  
     ) -> Self{
         match size{
             2 => {
@@ -145,7 +236,7 @@ impl BinfosSEPud {
                         let u4 = u01.dotc(&u00);
 
                         (u1 * u2 * u3 * u4).arg()
-                    } / cell_area;
+                    } ;
 
                     berrys_up[ei] = Binfo::new(berry, seud.u.eigenvalues[ei],Spin::U,None)
 
@@ -163,7 +254,7 @@ impl BinfosSEPud {
                         let u4 = u01.dotc(&u00);
 
                         (u1 * u2 * u3 * u4).arg()
-                    } / cell_area;
+                    } ;
 
                     berrys_do[ei] = Binfo::new(berry, seud.d.eigenvalues[ei],Spin::D,None)
 
@@ -193,7 +284,7 @@ impl BinfosSEPud {
                         let u4 = u01.dotc(&u00);
 
                         (u1 * u2 * u3 * u4).arg()
-                    } / cell_area;
+                    } ;
 
                     berrys_up[ei] = Binfo::new(berry, seud.u.eigenvalues[ei],Spin::U,None)
 
@@ -211,7 +302,7 @@ impl BinfosSEPud {
                         let u4 = u01.dotc(&u00);
 
                         (u1 * u2 * u3 * u4).arg()
-                    } / cell_area;
+                    } ;
 
                     berrys_do[ei] = Binfo::new(berry, seud.d.eigenvalues[ei],Spin::D,None)
 
@@ -226,11 +317,11 @@ impl BinfosSEPud {
 
 
 #[derive(Debug, Clone, Copy)]
-struct Binfo{
-    berry : f64,
-    eigen : f64,
-    spin : Spin,
-    bcd : Option<Vector2<f64>>
+pub struct Binfo{
+    pub berry : f64,
+    pub eigen : f64,
+    pub spin : Spin,
+    pub bcd : Option<Vector2<f64>>
 }
 
 impl Binfo{
