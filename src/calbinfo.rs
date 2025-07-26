@@ -9,7 +9,7 @@ use crate::cal_bc_bcd::{bcd_sum_up};
 use nalgebra::{Vector2,};
 use std::fs;
 
-pub fn cal_bcd_grid(fermi_energy : f64, system : &System,grid_mesh : usize, max_sub_mesh : usize, mesh_scale : f64) -> Vector2<f64>{
+pub fn cal_bcd_grid(fermi_energy : f64, system : &System,grid_mesh : usize, max_sub_mesh : usize, mesh_scale : f64, print_max_bcd : bool) -> Vector2<f64>{
 
     let mut bcd = Vector2::zeros();
 
@@ -19,12 +19,12 @@ pub fn cal_bcd_grid(fermi_energy : f64, system : &System,grid_mesh : usize, max_
         for grid_y in 0..n{
             let grid_info = GridInfo::new_ijn(grid_x,grid_y,n,n);
 
-            let (binfos_merged_onkks, max_bcd ) = calculate_band_info_grid(1, system, grid_info);
+            let (binfos_merged_onkks, max_bcd ) = calculate_band_info_grid(1, system, grid_info, print_max_bcd);
 
             if max_bcd.abs() > 10.{
 
                 let graph_mesh = std::cmp::min((max_bcd.abs() * mesh_scale) as usize,max_sub_mesh);
-                let (binfos_merged_onkks_new, _ ) = calculate_band_info_grid(graph_mesh, system, grid_info);
+                let (binfos_merged_onkks_new, _ ) = calculate_band_info_grid(graph_mesh, system, grid_info, print_max_bcd);
 
                 bcd += bcd_sum_up(fermi_energy, &binfos_merged_onkks_new);
             }
@@ -37,7 +37,7 @@ pub fn cal_bcd_grid(fermi_energy : f64, system : &System,grid_mesh : usize, max_
     bcd
 }
 
-pub fn calculate_band_info_grid(graph_mesh : usize, system : &System, grid_info : GridInfo) -> (Vec<BinfosMergedOnkk>,f64) {
+pub fn calculate_band_info_grid(graph_mesh : usize, system : &System, grid_info : GridInfo, print_max_bcd : bool) -> (Vec<BinfosMergedOnkk>,f64) {
     let mut out = Vec::new();
     let mut max_bc = 0.0f64;
     let mut max_bcd = 0.0f64;
@@ -73,7 +73,9 @@ pub fn calculate_band_info_grid(graph_mesh : usize, system : &System, grid_info 
         }
     }
 
-    println!("{}",max_bcd);
+    if print_max_bcd {
+        println!("{}",max_bcd)
+    }
 
     (out,max_bcd)
 }

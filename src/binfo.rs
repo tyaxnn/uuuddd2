@@ -139,7 +139,7 @@ impl BinfosSEPud {
 
         for ei in 0..size{
             let berry_px = binfos_sepud_px.u[ei].berry;
-            let berry_py = binfos_sepud_px.u[ei].berry;
+            let berry_py = binfos_sepud_py.u[ei].berry;
             let berry_mx = binfos_sepud_mx.u[ei].berry;
             let berry_my = binfos_sepud_my.u[ei].berry;
 
@@ -182,7 +182,7 @@ impl BinfosSEPud {
         for ei in 0..size{
             let berry = binfos_sepud.u[ei].berry;
             let berry_px = binfos_sepud_px.u[ei].berry;
-            let berry_py = binfos_sepud_px.u[ei].berry;
+            let berry_py = binfos_sepud_py.u[ei].berry;
 
             binfos_sepud.u[ei].bcd = Some({
                 let changex = (berry_px - berry) / DELTA;

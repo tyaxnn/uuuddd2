@@ -6,6 +6,52 @@ import os
 import sys
 from datetime import datetime
 
+def height_map_plot_with_sym_antisym_interp(kx, ky, data, description, plot_title, output_dir):
+    kx = np.array(kx)
+    ky = np.array(ky)
+    data = np.array(data)
+
+    # 補間用のグリッド（描画範囲）
+    grid_kx = np.linspace(kx.min(), kx.max(), 200)
+    grid_ky = np.linspace(ky.min(), ky.max(), 200)
+    grid_kx_mesh, grid_ky_mesh = np.meshgrid(grid_kx, grid_ky)
+
+    # 元のΩ(k)をグリッドに補間
+    grid_omega = griddata((kx, ky), data, (grid_kx_mesh, grid_ky_mesh), method='linear')
+
+    # 補間で得られた -k における値を取得
+    grid_omega_negk = griddata((kx, ky), data, (-grid_kx_mesh, -grid_ky_mesh), method='linear')
+
+    # 対称・反対称成分の計算（欠損値は無視）
+    mask = (~np.isnan(grid_omega)) & (~np.isnan(grid_omega_negk))
+    sym_grid = np.full_like(grid_omega, np.nan)
+    asym_grid = np.full_like(grid_omega, np.nan)
+
+    sym_grid[mask] = 0.5 * (grid_omega[mask] + grid_omega_negk[mask])
+    asym_grid[mask] = 0.5 * (grid_omega[mask] - grid_omega_negk[mask])
+
+    def plot_component(component_grid, comp_name):
+        fig, ax = plt.subplots(figsize=(8, 7))
+        contourf = ax.contourf(grid_kx_mesh, grid_ky_mesh, component_grid, levels=10, cmap='viridis')
+        ax.contour(grid_kx_mesh, grid_ky_mesh, component_grid, levels=contourf.levels, colors='white', linewidths=0.5, alpha=0.7)
+
+        ax.set_title(f"{plot_title} {description} ({comp_name})")
+        ax.set_xlabel('$k_x$')
+        ax.set_ylabel('$k_y$')
+        ax.set_aspect('equal', adjustable='box')
+        fig.colorbar(contourf, ax=ax, label='Berry Value ($\Omega$)')
+        ax.grid(True, linestyle='--', alpha=0.5)
+
+        filename = os.path.join(output_dir, f"{description}_{comp_name}.png")
+        plt.savefig(filename, dpi=300, bbox_inches='tight')
+        print(f"Saved {comp_name} plot as '{filename}'")
+        plt.close()
+
+    # 3種類プロット
+    plot_component(grid_omega, 'original')
+    plot_component(sym_grid, 'symmetric')
+    plot_component(asym_grid, 'antisymmetric')
+
 def height_map_plot(kx,ky,data,discription,plot_title,output_dir):
     # 元のデータの範囲に基づいて、100x100のグリッドを定義
     grid_kx = np.linspace(kx.min(), kx.max(), 200)
@@ -89,7 +135,7 @@ def plot_berry_contour(file_path,size):
 
         discription = "b" + str(i - 1)
         
-        height_map_plot(kx,ky,berry,discription,plot_title,output_dir)
+        height_map_plot_with_sym_antisym_interp(kx, ky, berry, discription, plot_title, output_dir)
 
     #------------------------------------------------------------
     #                       ベリー曲率のplot
@@ -158,4 +204,4 @@ def plot_berry_contour(file_path,size):
 
 if __name__ == '__main__':
     # 'berry.dat'を読み込んでプロットを作成
-    plot_berry_contour('dats/a2_500_sato_lambda0p1_j0p25_mu-0p1.csv',2)
+    plot_berry_contour('dats/a2_2000_uuuddd_lambda0p1_j0p25_mu0.csv',6)

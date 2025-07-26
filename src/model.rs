@@ -85,4 +85,11 @@ impl Param{
 
         Param { lambda, jj, mu }
     }
+    pub fn sj() -> Self{
+        let lambda = 0.1 * T;
+        let jj = 10.0;
+        let mu = 0.0;
+
+        Param { lambda, jj, mu }
+    }
 }

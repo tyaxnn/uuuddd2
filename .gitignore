@@ -3,3 +3,6 @@
 /output/berry
 /output/band_infos/dats
 /output/band_infos/output
+/output/tanzaku/data/*.dat
+/output/tanzaku/data/old
+/output/tanzaku/plot
