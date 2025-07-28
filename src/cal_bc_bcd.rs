@@ -22,7 +22,7 @@ impl MeshInfo{
         MeshInfo { grid_mesh , max_sub_mesh , mesh_scale }
     }
     pub fn debug(&self) -> String{
-        format!("{}_{}_{}",self.grid_mesh,self.max_sub_mesh,self.mesh_scale)
+        format!("{}_{}_{}",self.grid_mesh,self.max_sub_mesh,self.mesh_scale.to_string().replace('.', "p"))
     }
 }
 
